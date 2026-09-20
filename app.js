@@ -96,6 +96,15 @@
     return null;
   }
 
+  function guideScreenshots(phase, index, totalItems) {
+    const source = data.docxScreenshots?.[phase.id] || [];
+    if (!source.length || !totalItems) return { visible: [], total: 0 };
+    const start = Math.floor((index * source.length) / totalItems);
+    const end = Math.max(start + 1, Math.floor(((index + 1) * source.length) / totalItems));
+    const all = source.slice(start, end);
+    return { visible: all.slice(0, 4), total: all.length };
+  }
+
   // Road-following traces keep the overlay on the actual road network of each
   // source map. Named stops remain in data.js; these bends are visual geometry.
   const roadTraces = {
@@ -264,13 +273,16 @@
       const point = guidePoint(phase, item);
       const done = Boolean(progress.flags[index]);
       const isCurrent = state.progress.current.phaseId === phase.id && state.progress.current.index === index;
-      const visual = point
-        ? `<button class="guide-visual" type="button" data-step-index="${point.index}" aria-label="在地图上定位 ${escapeHtml(point.name)}" style="background-image:url('${region.map}');background-position:${point.x}% ${point.y}%"><span>地图定位</span><i></i></button>`
-        : `<div class="guide-visual is-overview" style="background-image:url('${region.map}')"><span>路线图</span></div>`;
+      const screenshots = guideScreenshots(phase, index, details.length);
+      const screenshotGallery = screenshots.visible.length
+        ? `<div class="guide-shot-block"><div class="guide-shot-heading"><span>Word 原文游戏截图</span><em>${screenshots.total} 张${screenshots.total > screenshots.visible.length ? ` · 已展示 ${screenshots.visible.length} 张` : ''}</em></div><div class="guide-shot-strip">${screenshots.visible.map((src, shotIndex) => `<a class="guide-shot" href="${src}" target="_blank" rel="noreferrer" title="点击放大查看原图"><img src="${src}" loading="lazy" alt="${escapeHtml(item.place)} 原文截图 ${shotIndex + 1}"><span>点击放大</span></a>`).join('')}</div></div>`
+        : '';
+      const mapLocator = point
+        ? `<button class="guide-map-location" type="button" data-step-index="${point.index}" aria-label="在地图上定位 ${escapeHtml(point.name)}">⌖ 在地图上定位：${escapeHtml(point.name)}</button>`
+        : '';
       return `
       <li class="guide-item ${done ? 'is-done' : ''} ${isCurrent ? 'is-current' : ''}">
         <span class="guide-index">${String(index + 1).padStart(2, '0')}</span>
-        ${visual}
         <div class="guide-body">
           <div class="guide-topline"><strong>${escapeHtml(item.place)}</strong><span class="guide-region-dot" style="background:${region.tone}"></span>${isCurrent ? '<em class="current-label">当前位置</em>' : ''}</div>
           <p class="guide-action">${escapeHtml(item.action)}</p>
@@ -278,6 +290,8 @@
             ${item.npc ? `<span class="guide-chip guide-npc">${escapeHtml(item.npc)}</span>` : ''}
             ${item.gain ? `<span class="guide-chip guide-gain">${escapeHtml(item.gain)}</span>` : ''}
           </div>
+          ${screenshotGallery}
+          ${mapLocator}
           <div class="guide-controls">
             <button class="guide-check ${done ? 'is-checked' : ''}" type="button" data-progress-toggle="true" data-progress-phase="${phase.id}" data-progress-index="${index}" aria-label="${done ? '取消完成' : '标记完成'}第 ${index + 1} 步">${done ? '✓ 已完成' : '○ 标记完成'}</button>
             <button class="guide-current ${isCurrent ? 'is-current' : ''}" type="button" data-current-position="true" data-current-phase="${phase.id}" data-current-index="${index}">${isCurrent ? '当前推进位置' : '设为当前位置'}</button>
@@ -286,7 +300,7 @@
       </li>`;
     }).join('');
     return `<section class="panel guide-panel">
-      <div class="panel-heading guide-heading"><div><h3>图文执行清单</h3><p>点击小地图可定位路线；完成一步就勾选，想记录正在推进的位置就点“设为当前位置”。NPC 编号沿用原文统计，跳过的可选战已注明。</p></div><div class="guide-tools"><span class="guide-count">${progress.done}/${details.length} 步</span><button class="progress-reset" id="resetProgressBtn" type="button">清除本机进度</button></div></div>
+      <div class="panel-heading guide-heading"><div><h3>图文执行清单</h3><p>每一步配有 Word 中的实际游戏截图，能看到 NPC、对话框、建筑入口和关键场景；点击图片可放大查看。地图定位、完成标记和当前位置记录仍然可用。</p></div><div class="guide-tools"><span class="guide-count">${progress.done}/${details.length} 步</span><button class="progress-reset" id="resetProgressBtn" type="button">清除本机进度</button></div></div>
       <ol class="guide-list">${items}</ol>
     </section>`;
   }

@@ -175,12 +175,23 @@ a { color: inherit; }
 .progress-reset:hover { color: var(--ink); border-color: var(--ink); }
 .full-guide { margin-top: 20px; }
 .guide-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 25px; margin: 0; padding: 0; list-style: none; counter-reset: guide; }
-.guide-item { display: grid; grid-template-columns: 27px 78px minmax(0, 1fr); gap: 10px; align-items: start; border-top: 1px solid var(--line); padding: 13px 0; }
+.guide-item { display: grid; grid-template-columns: 27px minmax(0, 1fr); gap: 10px; align-items: start; border-top: 1px solid var(--line); padding: 13px 0; }
 .guide-item:first-child { border-top: 0; padding-top: 0; }
 .guide-item:last-child { padding-bottom: 0; }
 .guide-index { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 8px; color: var(--route-color, var(--orange)); background: #f5f7fa; font-size: 10px; font-weight: 800; }
 .guide-item.is-current { background: linear-gradient(90deg, rgba(97,196,184,.08), transparent 80%); }
 .guide-item.is-done .guide-index { color: #fff; background: var(--route-color, var(--orange)); }
+.guide-body { min-width: 0; }
+.guide-shot-block { margin-top: 11px; }
+.guide-shot-heading { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; color: #72809a; font-size: 9px; font-weight: 800; }
+.guide-shot-heading em { color: #a2aaba; font-size: 8px; font-style: normal; font-weight: 600; }
+.guide-shot-strip { display: flex; gap: 7px; overflow-x: auto; padding: 2px 1px 6px; scrollbar-color: #cbd4e0 transparent; }
+.guide-shot { position: relative; display: block; flex: 0 0 142px; height: 112px; overflow: hidden; border: 1px solid #d7dee8; border-radius: 7px; background: #eef2f5; box-shadow: 0 2px 7px rgba(21,33,57,.08); }
+.guide-shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.guide-shot span { position: absolute; right: 4px; bottom: 4px; padding: 2px 4px; border-radius: 4px; color: #fff; background: rgba(16,26,45,.68); font-size: 8px; opacity: 0; transition: opacity .15s ease; }
+.guide-shot:hover span, .guide-shot:focus span { opacity: 1; }
+.guide-map-location { margin-top: 7px; padding: 4px 6px; border-radius: 5px; color: #60708b; background: #f1f5f8; cursor: pointer; font-size: 9px; }
+.guide-map-location:hover { color: var(--ink); background: #e6edf3; }
 .guide-visual { position: relative; width: 78px; height: 58px; padding: 0; border: 1px solid rgba(255,255,255,.9); border-radius: 8px; background-color: #dbe6e8; background-size: 285%; background-repeat: no-repeat; box-shadow: inset 0 0 0 1px rgba(26,41,69,.12); overflow: hidden; cursor: pointer; }
 .guide-visual::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(16,26,45,.1), rgba(16,26,45,.38)); }
 .guide-visual span { position: absolute; z-index: 2; left: 5px; bottom: 4px; color: #fff; font-size: 8px; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,.55); }
@@ -286,8 +297,8 @@ a { color: inherit; }
   .progress-continue { margin-top: 13px; }
   .guide-heading { display: block; }
   .guide-tools { margin-top: 10px; }
-  .guide-item { grid-template-columns: 27px 68px minmax(0, 1fr); gap: 8px; }
-  .guide-visual { width: 68px; height: 54px; }
+  .guide-item { grid-template-columns: 27px minmax(0, 1fr); gap: 8px; }
+  .guide-shot { flex-basis: 134px; height: 106px; }
 }
 
 @media print {
