@@ -2,7 +2,8 @@
   'use strict';
 
   const data = window.guideData;
-  const state = { view: 'overview', phaseId: 'u1', activeStep: 0, query: '', zoom: 1 };
+  const progressKey = 'pokemmo-parallel-guide-progress-v1';
+  const state = { view: 'overview', phaseId: 'u1', activeStep: 0, query: '', zoom: 1, progress: loadProgress() };
   const regionById = Object.fromEntries(data.regions.map((region) => [region.id, region]));
   const phaseById = Object.fromEntries(data.phases.map((phase) => [phase.id, phase]));
   const regionOrder = data.regions.map((region) => region.id);
@@ -35,6 +36,65 @@
     s5: { badge: '联盟 04', text: '神奥联盟完成后，最后回关东联盟。' },
     k6: { badge: '收官', text: '关东冠军之路和联盟完成，五地区平行通关结束。' }
   };
+
+  function loadProgress() {
+    const empty = { completed: {}, current: { phaseId: 'u1', index: 0 } };
+    try {
+      const saved = JSON.parse(localStorage.getItem(progressKey) || 'null');
+      if (!saved || typeof saved !== 'object') return empty;
+      return {
+        completed: saved.completed && typeof saved.completed === 'object' ? saved.completed : {},
+        current: saved.current && typeof saved.current === 'object' ? saved.current : empty.current
+      };
+    } catch (error) {
+      return empty;
+    }
+  }
+
+  function saveProgress() {
+    try { localStorage.setItem(progressKey, JSON.stringify(state.progress)); } catch (error) { /* private browsing may disable storage */ }
+  }
+
+  function detailItems(phase) {
+    return data.detailGuides?.[phase.id] || [];
+  }
+
+  function phaseProgress(phase) {
+    const items = detailItems(phase);
+    const flags = state.progress.completed[phase.id] || [];
+    const done = items.reduce((count, item, index) => count + (flags[index] ? 1 : 0), 0);
+    return { done, total: items.length, flags };
+  }
+
+  function totalProgress() {
+    return parallelPhases.reduce((total, phase) => {
+      const progress = phaseProgress(phase);
+      return { done: total.done + progress.done, total: total.total + progress.total };
+    }, { done: 0, total: 0 });
+  }
+
+  function currentDetail() {
+    const phase = phaseById[state.progress.current.phaseId] || parallelPhases[0];
+    const items = detailItems(phase);
+    const index = Math.max(0, Math.min(Number(state.progress.current.index) || 0, Math.max(items.length - 1, 0)));
+    return { phase, item: items[index], index };
+  }
+
+  function normalizePlace(value) {
+    return String(value || '').replace(/[\s/→·、，,。]/g, '');
+  }
+
+  function guidePoint(phase, item) {
+    const text = normalizePlace(`${item.place} ${item.action}`);
+    const route = phase.route || [];
+    for (let index = 0; index < route.length; index += 1) {
+      const point = route[index];
+      const name = String(point.name || '');
+      const aliases = [name, name.replace(/[市镇]$/, ''), name.replace(/号路$/, '路')].filter(Boolean);
+      if (aliases.some((alias) => alias.length > 1 && text.includes(normalizePlace(alias)))) return { ...point, index };
+    }
+    return null;
+  }
 
   // Road-following traces keep the overlay on the actual road network of each
   // source map. Named stops remain in data.js; these bends are visual geometry.
@@ -91,6 +151,7 @@
       <button class="phase-link ${state.view === 'phase' && state.phaseId === phase.id ? 'is-active' : ''}" type="button" data-phase-id="${phase.id}" aria-current="${state.phaseId === phase.id ? 'step' : 'false'}">
         <span class="phase-num">${String(phase.order).padStart(2, '0')}</span>
         <span class="phase-label">${escapeHtml(phase.title)}</span>
+        <span class="phase-progress">${phaseProgress(phase).done}/${phaseProgress(phase).total}</span>
       </button>`;
     if (compact) return filtered.map(linkForPhase).join('');
     return regionOrder.map((regionId) => {
@@ -105,7 +166,8 @@
 
   function renderSidebarNav() {
     $('#phaseNav').innerHTML = renderPhaseLinks('phaseNav', true);
-    $('#phaseCountLabel').textContent = String(data.phases.length);
+    const overall = totalProgress();
+    $('#phaseCountLabel').textContent = `${data.phases.length} · ${overall.done}/${overall.total}`;
     $('#overviewBtn').classList.toggle('is-active', state.view === 'overview' && !state.query);
   }
 
@@ -133,8 +195,14 @@
       ['04', '文档中的建议不是硬规则', '流程按原文整理，翻车时以当前版本和自己的队伍状态为准。']
     ].map(([num, title, copy]) => `<li><span class="rule-num">${num}</span><div><strong>${title}</strong><span>${copy}</span></div></li>`).join('');
     const team = data.team.map((member) => `<div class="team-chip" style="--team-color:${member.color}"><strong>${member.name}</strong><span>${member.type}</span></div>`).join('');
+    const overall = totalProgress();
+    const current = currentDetail();
+    const currentPlace = current.item ? `${current.phase.title} · ${current.item.place}` : current.phase.title;
+    const currentCopy = current.item ? current.item.action : '点击阶段导航开始记录。';
+    const currentPercent = overall.total ? Math.round((overall.done / overall.total) * 100) : 0;
     return `${intro}
       <div class="reference-banner"><span>◉</span><span><b>地图说明</b> 当前地图使用五地区总览图，并在上面叠加攻略阶段的路线节点；点击任意地区即可进入对应阶段。</span></div>
+      <section class="panel progress-panel"><div class="progress-summary"><div><div class="eyebrow">local progress</div><h3>继续上次推进位置</h3><p><strong>${escapeHtml(currentPlace)}</strong><br>${escapeHtml(currentCopy)}</p></div><button class="progress-continue" type="button" data-phase-id="${current.phase.id}">打开当前位置</button></div><div class="progress-meter"><span style="width:${currentPercent}%"></span></div><div class="progress-foot"><span>本机已记录 ${overall.done} / ${overall.total} 个步骤</span><span>${currentPercent}%</span></div></section>
       <div class="overview-grid">
         <section class="panel flow-panel">
           <div class="panel-heading"><div><h3>五地区轮换路线</h3><p>按照文档顺序，先完成前半段道馆，再进入等级轮换。</p></div><span class="tiny-link">点击地区进入</span></div>
@@ -189,22 +257,36 @@
   }
 
   function renderDetailedGuide(phase, region) {
-    const details = data.detailGuides?.[phase.id] || [];
+    const details = detailItems(phase);
     if (!details.length) return '';
-    const items = details.map((item, index) => `
-      <li class="guide-item">
+    const progress = phaseProgress(phase);
+    const items = details.map((item, index) => {
+      const point = guidePoint(phase, item);
+      const done = Boolean(progress.flags[index]);
+      const isCurrent = state.progress.current.phaseId === phase.id && state.progress.current.index === index;
+      const visual = point
+        ? `<button class="guide-visual" type="button" data-step-index="${point.index}" aria-label="在地图上定位 ${escapeHtml(point.name)}" style="background-image:url('${region.map}');background-position:${point.x}% ${point.y}%"><span>地图定位</span><i></i></button>`
+        : `<div class="guide-visual is-overview" style="background-image:url('${region.map}')"><span>路线图</span></div>`;
+      return `
+      <li class="guide-item ${done ? 'is-done' : ''} ${isCurrent ? 'is-current' : ''}">
         <span class="guide-index">${String(index + 1).padStart(2, '0')}</span>
+        ${visual}
         <div class="guide-body">
-          <div class="guide-topline"><strong>${escapeHtml(item.place)}</strong><span class="guide-region-dot" style="background:${region.tone}"></span></div>
+          <div class="guide-topline"><strong>${escapeHtml(item.place)}</strong><span class="guide-region-dot" style="background:${region.tone}"></span>${isCurrent ? '<em class="current-label">当前位置</em>' : ''}</div>
           <p class="guide-action">${escapeHtml(item.action)}</p>
           <div class="guide-meta">
             ${item.npc ? `<span class="guide-chip guide-npc">${escapeHtml(item.npc)}</span>` : ''}
             ${item.gain ? `<span class="guide-chip guide-gain">${escapeHtml(item.gain)}</span>` : ''}
           </div>
+          <div class="guide-controls">
+            <button class="guide-check ${done ? 'is-checked' : ''}" type="button" data-progress-toggle="true" data-progress-phase="${phase.id}" data-progress-index="${index}" aria-label="${done ? '取消完成' : '标记完成'}第 ${index + 1} 步">${done ? '✓ 已完成' : '○ 标记完成'}</button>
+            <button class="guide-current ${isCurrent ? 'is-current' : ''}" type="button" data-current-position="true" data-current-phase="${phase.id}" data-current-index="${index}">${isCurrent ? '当前推进位置' : '设为当前位置'}</button>
+          </div>
         </div>
-      </li>`).join('');
+      </li>`;
+    }).join('');
     return `<section class="panel guide-panel">
-      <div class="panel-heading guide-heading"><div><h3>逐步执行攻略</h3><p>按原文拆成“走到哪里、打谁、拿什么、下一步做什么”；NPC 编号沿用原文统计，跳过的可选战注明在对应条目内。</p></div><span class="guide-count">${details.length} 步</span></div>
+      <div class="panel-heading guide-heading"><div><h3>图文执行清单</h3><p>点击小地图可定位路线；完成一步就勾选，想记录正在推进的位置就点“设为当前位置”。NPC 编号沿用原文统计，跳过的可选战已注明。</p></div><div class="guide-tools"><span class="guide-count">${progress.done}/${details.length} 步</span><button class="progress-reset" id="resetProgressBtn" type="button">清除本机进度</button></div></div>
       <ol class="guide-list">${items}</ol>
     </section>`;
   }
@@ -212,6 +294,8 @@
   function renderPhaseView() {
     const phase = phaseById[state.phaseId] || data.phases[0];
     const region = regionById[phase.region];
+    const progress = phaseProgress(phase);
+    const progressPercent = progress.total ? Math.round((progress.done / progress.total) * 100) : 0;
     const steps = phase.steps.map((step, index) => `<li class="step-item ${state.activeStep === index ? 'is-active' : ''}" data-step-index="${index}"><span class="step-index">${String(index + 1).padStart(2, '0')}</span><div><span class="step-place">${escapeHtml(step[0])}</span><p class="step-copy">${escapeHtml(step[1])}</p><span class="step-tag">${escapeHtml(step[2])}</span></div></li>`).join('');
     const rail = renderPhaseLinks('phaseRail', true);
     const phaseIndex = parallelPhases.findIndex((item) => item.id === phase.id);
@@ -224,13 +308,13 @@
         <aside class="panel phase-rail"><h3>阶段导航</h3><div class="phase-nav">${rail}</div></aside>
         ${renderMap(phase, region)}
         <aside class="detail-panel" style="--route-color:${region.tone}">
-          <section class="panel phase-header"><div class="phase-kicker"><span>${region.name} / ${phase.kicker}</span><span class="phase-badge" style="background:${region.tone}">${String(phase.order).padStart(2, '0')}</span></div><h2>${escapeHtml(phase.title)}</h2><p>${escapeHtml(phase.summary)}</p><div class="phase-meta"><span class="meta-pill">${escapeHtml(phase.cap)} 级上限</span><span class="meta-pill">${escapeHtml(phase.npc)}</span><span class="meta-pill">按路线推进</span></div></section>
+          <section class="panel phase-header"><div class="phase-kicker"><span>${region.name} / ${phase.kicker}</span><span class="phase-badge" style="background:${region.tone}">${String(phase.order).padStart(2, '0')}</span></div><h2>${escapeHtml(phase.title)}</h2><p>${escapeHtml(phase.summary)}</p><div class="phase-meta"><span class="meta-pill">${escapeHtml(phase.cap)} 级上限</span><span class="meta-pill">${escapeHtml(phase.npc)}</span><span class="meta-pill">${progress.done}/${progress.total} 步已完成</span></div><div class="phase-progress-track"><span style="width:${progressPercent}%"></span></div></section>
           ${handoff}
-          ${renderDetailedGuide(phase, region)}
           <section class="panel step-panel"><h3 class="section-title">地图节点摘要</h3><ol class="step-list">${steps}</ol></section>
           <section class="panel focus-panel"><h3>这一段记住什么</h3><p>${escapeHtml(phase.focus)}</p></section>
         </aside>
-      </div>`;
+      </div>
+      <div class="full-guide" style="--route-color:${region.tone}">${renderDetailedGuide(phase, region)}</div>`;
   }
 
   function render() {
@@ -260,6 +344,42 @@
   }
 
   document.addEventListener('click', (event) => {
+    const progressTarget = event.target.closest('[data-progress-toggle]');
+    if (progressTarget) {
+      const phaseId = progressTarget.dataset.progressPhase;
+      const index = Number(progressTarget.dataset.progressIndex);
+      const phase = phaseById[phaseId];
+      if (phase) {
+        const flags = [...(state.progress.completed[phaseId] || [])];
+        flags[index] = !flags[index];
+        state.progress.completed[phaseId] = flags;
+        if (flags[index]) {
+          const nextIndex = index + 1;
+          const nextPhase = nextIndex < detailItems(phase).length ? phase : parallelPhases[phase.order];
+          state.progress.current = nextPhase
+            ? { phaseId: nextPhase.id, index: nextPhase === phase ? nextIndex : 0 }
+            : { phaseId, index };
+        } else {
+          state.progress.current = { phaseId, index };
+        }
+        saveProgress();
+        render();
+      }
+      return;
+    }
+    const currentTarget = event.target.closest('[data-current-position]');
+    if (currentTarget) {
+      state.progress.current = { phaseId: currentTarget.dataset.currentPhase, index: Number(currentTarget.dataset.currentIndex) };
+      saveProgress();
+      render();
+      return;
+    }
+    if (event.target.closest('#resetProgressBtn')) {
+      state.progress = { completed: {}, current: { phaseId: 'u1', index: 0 } };
+      saveProgress();
+      render();
+      return;
+    }
     const phaseButton = event.target.closest('[data-phase-id]');
     if (phaseButton) { selectPhase(phaseButton.dataset.phaseId); return; }
     const overviewButton = event.target.closest('#overviewBtn');
