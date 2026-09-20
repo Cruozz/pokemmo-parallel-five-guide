@@ -75,7 +75,8 @@
 
   function phaseMatches(phase, query) {
     if (!query) return true;
-    const text = [phase.title, phase.kicker, phase.summary, phase.focus, ...phase.steps.flat()].join(' ').toLowerCase();
+    const details = (data.detailGuides?.[phase.id] || []).flatMap((item) => Object.values(item));
+    const text = [phase.title, phase.kicker, phase.summary, phase.focus, ...phase.steps.flat(), ...details].join(' ').toLowerCase();
     return text.includes(query.toLowerCase());
   }
 
@@ -187,6 +188,27 @@
     </section>`;
   }
 
+  function renderDetailedGuide(phase, region) {
+    const details = data.detailGuides?.[phase.id] || [];
+    if (!details.length) return '';
+    const items = details.map((item, index) => `
+      <li class="guide-item">
+        <span class="guide-index">${String(index + 1).padStart(2, '0')}</span>
+        <div class="guide-body">
+          <div class="guide-topline"><strong>${escapeHtml(item.place)}</strong><span class="guide-region-dot" style="background:${region.tone}"></span></div>
+          <p class="guide-action">${escapeHtml(item.action)}</p>
+          <div class="guide-meta">
+            ${item.npc ? `<span class="guide-chip guide-npc">${escapeHtml(item.npc)}</span>` : ''}
+            ${item.gain ? `<span class="guide-chip guide-gain">${escapeHtml(item.gain)}</span>` : ''}
+          </div>
+        </div>
+      </li>`).join('');
+    return `<section class="panel guide-panel">
+      <div class="panel-heading guide-heading"><div><h3>逐步执行攻略</h3><p>按原文拆成“走到哪里、打谁、拿什么、下一步做什么”；NPC 编号沿用原文统计，跳过的可选战注明在对应条目内。</p></div><span class="guide-count">${details.length} 步</span></div>
+      <ol class="guide-list">${items}</ol>
+    </section>`;
+  }
+
   function renderPhaseView() {
     const phase = phaseById[state.phaseId] || data.phases[0];
     const region = regionById[phase.region];
@@ -197,14 +219,15 @@
     const next = parallelPhases[phaseIndex + 1];
     const note = parallelNotes[phase.id] || { badge: '接力点', text: `完成后转去 ${next ? `${regionById[next.region].name} · ${next.title}` : '五地区流程完成'}。` };
     const handoff = `<section class="panel handoff-panel"><div class="handoff-top"><span class="handoff-label">${escapeHtml(note.badge)}</span><span>${escapeHtml(note.text)}</span></div><div class="handoff-nav"><span>${previous ? `上一站：${regionById[previous.region].name} · ${previous.title}` : '起点：新号从合众开始'}</span><b>→</b><strong>${next ? `下一站：${regionById[next.region].name} · ${next.title}` : '五地区流程完成'}</strong></div></section>`;
-    return `<section class="page-intro"><div><div class="eyebrow">${region.en} · phase ${String(phase.order).padStart(2, '0')}</div><h2>${escapeHtml(phase.kicker)}</h2><p>阶段视图把原文的动作拆成可点击的地图节点；先看路线，再按右侧清单推进。</p></div><div class="intro-meta"><strong>${escapeHtml(phase.cap)}</strong><span>等级上限</span><i class="dot-sep"></i><strong>${escapeHtml(phase.npc.replace('NPC ×', '×'))}</strong><span>必打 NPC</span></div></section>
+    return `<section class="page-intro"><div><div class="eyebrow">${region.en} · phase ${String(phase.order).padStart(2, '0')}</div><h2>${escapeHtml(phase.kicker)}</h2><p>先按地图节点确认方向，再按“逐步执行攻略”推进剧情、NPC、道馆、技能和道具。</p></div><div class="intro-meta"><strong>${escapeHtml(phase.cap)}</strong><span>等级上限</span><i class="dot-sep"></i><strong>${escapeHtml(phase.npc.replace('NPC ×', '×'))}</strong><span>原文统计 NPC</span></div></section>
       <div class="detail-layout">
         <aside class="panel phase-rail"><h3>阶段导航</h3><div class="phase-nav">${rail}</div></aside>
         ${renderMap(phase, region)}
         <aside class="detail-panel" style="--route-color:${region.tone}">
           <section class="panel phase-header"><div class="phase-kicker"><span>${region.name} / ${phase.kicker}</span><span class="phase-badge" style="background:${region.tone}">${String(phase.order).padStart(2, '0')}</span></div><h2>${escapeHtml(phase.title)}</h2><p>${escapeHtml(phase.summary)}</p><div class="phase-meta"><span class="meta-pill">${escapeHtml(phase.cap)} 级上限</span><span class="meta-pill">${escapeHtml(phase.npc)}</span><span class="meta-pill">按路线推进</span></div></section>
           ${handoff}
-          <section class="panel step-panel"><h3 class="section-title">本段动作清单</h3><ol class="step-list">${steps}</ol></section>
+          ${renderDetailedGuide(phase, region)}
+          <section class="panel step-panel"><h3 class="section-title">地图节点摘要</h3><ol class="step-list">${steps}</ol></section>
           <section class="panel focus-panel"><h3>这一段记住什么</h3><p>${escapeHtml(phase.focus)}</p></section>
         </aside>
       </div>`;
