@@ -1,0 +1,11 @@
+# Local/editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+
+# Local preview and generated files
+*.log
+*.tmp
+node_modules/
+

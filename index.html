@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101a2d">
+  <title>平行五通 · PokeMMO 攻略路线</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div>
+          <p class="brand-kicker">POKEMMO ROUTE PLANNER</p>
+          <h1>平行五通</h1>
+        </div>
+      </div>
+      <p class="brand-note">把五张地图串成一条可执行路线，边看地图，边推进流程。</p>
+      <button class="overview-btn" id="overviewBtn" type="button"><span class="nav-icon">◈</span> 总览</button>
+      <div class="sidebar-heading"><span>全局操作顺序</span><span id="phaseCountLabel">26</span></div>
+      <nav class="phase-nav" id="phaseNav" aria-label="攻略阶段"></nav>
+      <div class="sidebar-footer">
+        <div class="source-stamp">整理自《平行通关流程（暂定）》</div>
+        <a href="https://www.bilibili.com/video/BV1FwxmzmEeR/?vd_source=fad737659a85aca5b3b05b4d80bded59" target="_blank" rel="noreferrer">打开原流程视频 ↗</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <button class="mobile-menu" id="mobileMenu" type="button" aria-label="打开导航">☰</button>
+        <div class="breadcrumb"><span>路线工作台</span><b>/</b><span id="breadcrumbLabel">五地区总览</span></div>
+        <div class="topbar-actions">
+          <label class="search-wrap" aria-label="搜索攻略内容">
+            <span aria-hidden="true">⌕</span>
+            <input id="searchInput" type="search" placeholder="搜索城市、道馆或道具">
+          </label>
+          <button class="top-action" id="printBtn" type="button">打印当前阶段</button>
+        </div>
+      </header>
+
+      <div id="appView" aria-live="polite"></div>
+    </main>
+  </div>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
