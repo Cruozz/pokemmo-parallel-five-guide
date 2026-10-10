@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#146b61"><title>合众路线地图 · 可编辑模板</title>
+  <link rel="stylesheet" href="template.css?v=20261007-1">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand"><svg viewBox="0 0 36 36" aria-hidden="true"><path d="m4 9 9-5 10 5 9-5v23l-9 5-10-5-9 5Z"/><path d="M13 4v23M23 9v23"/></svg><div><p>POKEMMO / UNOVA</p><h1>合众路线地图 <span>模板</span></h1></div></div>
+    <div class="header-actions"><div class="mode-switch" role="group" aria-label="地图模式"><button type="button" data-mode="read" aria-pressed="true">看攻略</button><button type="button" data-mode="edit" aria-pressed="false">编辑地图</button></div><button type="button" id="saveBtn">保存草稿</button><button type="button" id="exportBtn">导出</button><button type="button" id="importBtn">导入</button></div>
+  </header>
+  <div class="workspace">
+    <aside class="library" aria-label="地图目录">
+      <div class="library-heading"><h2>合众地图库</h2><span id="mapCount"></span></div>
+      <button type="button" id="overviewBtn" class="overview-link">打开合众总览 <span aria-hidden="true">↗</span></button>
+      <label class="search-label"><span class="sr-only">搜索地图</span><input id="mapSearch" type="search" placeholder="搜索城市、道路或楼层"></label>
+      <label class="sr-only" for="categoryFilter">地图分类</label><select id="categoryFilter"><option value="all">全部地图</option><option value="城镇">城镇</option><option value="道馆">道馆</option><option value="道路">道路</option><option value="室内">室内</option><option value="其他区域">其他区域</option><option value="我的地图">我的地图</option></select>
+      <label class="map-name-field edit-only">地图名称<input id="mapNameInput" maxlength="120"></label>
+      <nav id="mapList" aria-label="选择地图"></nav>
+      <button type="button" id="addMapBtn" class="edit-only add-map">＋ 添加自己的地图</button>
+      <a class="back-guide" href="../index.html">返回文字攻略</a>
+    </aside>
+    <main class="map-workspace">
+      <div class="map-heading"><div><p id="breadcrumb">合众 / 城镇</p><h2 id="mapTitle">三曜市</h2></div><button type="button" id="backMapBtn" hidden>返回上张地图</button></div>
+      <div class="map-card">
+        <div class="map-toolbar"><div class="tools"><button type="button" data-tool="browse" aria-pressed="true">拖动地图</button><button type="button" data-tool="add" class="edit-only" aria-pressed="false">＋ 添加标记</button><button type="button" data-tool="line" class="edit-only" aria-pressed="false">画路线</button><button type="button" id="finishLineBtn" hidden>完成绘制</button><button type="button" id="removeVertexBtn" hidden>撤销拐点</button><button type="button" id="undoBtn" class="edit-only" disabled>撤销</button></div><div class="zoom-tools"><button type="button" id="zoomOut" aria-label="缩小地图">−</button><output id="zoomValue">100%</output><button type="button" id="zoomIn" aria-label="放大地图">＋</button><button type="button" id="fitBtn">适合窗口</button></div></div>
+        <p id="toolHint" class="tool-hint">点击地图上的地点，查看这一步要做什么。</p>
+        <div id="mapViewport" class="map-viewport" tabindex="0" aria-label="交互地图；可拖动，使用加减按钮缩放"><div id="mapSurface" class="map-surface"><img id="mapImage" alt="三曜市全图" draggable="false"><svg id="pathOverlay" class="path-overlay" aria-hidden="true"></svg><div id="markerLayer"></div></div></div>
+        <div class="map-footer"><span id="mapMeta"></span><a id="mapSource" target="_blank" rel="noreferrer">底图来源 ↗</a></div>
+      </div>
+      <section class="route-section" aria-label="当前地图的操作顺序"><div class="route-heading"><h3 id="routeTitle">在这里按顺序办事</h3><span id="routeProgress"></span></div><ol id="routeList"></ol><p id="emptyRoute" hidden>这张图还没有步骤。切到“编辑地图”，从第一个地点开始添加。</p></section>
+    </main>
+    <aside id="detailPanel" class="detail-panel" aria-label="选中节点的动作与配图"></aside>
+  </div>
+  <footer class="app-footer"><span id="saveStatus" role="status">正在读取本机草稿…</span><span>先点地点，再看动作 · 改动可以导出备份</span></footer>
+  <div id="toast" role="status" class="toast" hidden></div>
+  <input type="file" id="importFile" accept=".json,application/json" hidden><input type="file" id="mapFile" accept="image/png,image/jpeg,image/webp" hidden><input type="file" id="mediaFile" accept="image/png,image/jpeg,image/webp" hidden>
+  <dialog id="imageDialog" aria-labelledby="imageDialogTitle"><div class="image-dialog-head"><h2 id="imageDialogTitle">节点配图</h2><button type="button" id="closeImage">关闭 ×</button></div><img id="largeImage" alt=""><p id="largeCaption"></p></dialog>
+  <dialog id="backupDialog" aria-labelledby="backupDialogTitle"><div class="image-dialog-head"><h2 id="backupDialogTitle">导出地图备份</h2><button type="button" id="closeBackup">关闭 ×</button></div><p>备份包含标记、动作顺序、路线、进度和自己上传的图片。预置地图与配图随原工程文件一起保留。</p><a id="backupDownload" class="download-link">下载备份文件</a><details><summary>无法下载时，复制备份内容</summary><label class="sr-only" for="backupText">地图备份内容</label><textarea id="backupText" readonly spellcheck="false"></textarea><p>选中全部内容，保存为 .json 文件，即可用“导入”恢复。</p></details></dialog>
+  <script src="core.js?v=20261007-1"></script><script src="demo-data.js?v=20261007-1"></script><script src="template.js?v=20261007-1"></script>
+</body>
+</html>

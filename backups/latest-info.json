@@ -1,0 +1,13 @@
+{
+  "savedOn": "2026-10-10",
+  "file": "平行五通-攻略备份-2026-10-10.json",
+  "guideVersion": "1.2.3",
+  "sha256": "357c09879b9eb0863de6cdd78b81f4b1941100b358bc7c66fc1822e5ca9ffaf7",
+  "phases": 26,
+  "steps": 132,
+  "resume": {
+    "phaseId": "k4",
+    "phaseTitle": "关东 7",
+    "phaseOrder": 19
+  }
+}

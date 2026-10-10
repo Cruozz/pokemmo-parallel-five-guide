@@ -9,3 +9,8 @@ desktop.ini
 *.tmp
 node_modules/
 
+# Desktop packaging cache (downloaded SDK and generated files)
+/desktop-app/.build/
+/desktop-app/.qa/
+/release/*.exe
+

@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101a2d">
   <title>平行五通 · PokeMMO 攻略路线</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20261010-node-summary1">
+  <link rel="stylesheet" href="guide-editor.css?v=20261010-node-summary1">
+  <link rel="stylesheet" href="image-markup.css?v=20261010-landmarks1">
 </head>
 <body>
   <div class="app-shell">
@@ -36,16 +38,42 @@
             <span aria-hidden="true">⌕</span>
             <input id="searchInput" type="search" placeholder="搜索城市、道馆或道具">
           </label>
+          <button class="top-action edit-guide-button" id="editGuideBtn" type="button" aria-pressed="false" disabled>编辑流程</button>
           <button class="top-action" id="printBtn" type="button">打印当前阶段</button>
         </div>
       </header>
-
+      <section class="guide-edit-bar" aria-label="攻略编辑工具">
+        <div><strong>编辑流程</strong><span id="guideEditStatus" role="status">正在载入…</span></div>
+        <div class="guide-edit-actions"><button id="guideUndoBtn" type="button" disabled>撤销</button><button id="guideSaveBtn" type="button">保存到本机</button><button id="guideExportBtn" type="button">导出备份</button><button id="guideImportBtn" type="button">导入备份</button></div>
+      </section>
       <div id="appView" aria-live="polite"></div>
     </main>
   </div>
-  <script src="data.js"></script>
-  <script src="detail-guides.js"></script>
+  <dialog id="guideEditorDialog" class="guide-editor-dialog" aria-labelledby="guideEditorTitle">
+    <header class="editor-dialog-head"><div><p>平行五通 · 内容编辑</p><h2 id="guideEditorTitle">编辑文字与图片</h2></div></header>
+    <div id="guideEditorBody" class="editor-dialog-body"></div>
+    <footer class="editor-dialog-footer"><p id="guideEditorError" role="alert" hidden></p><div><span class="editor-file-hint">图片支持 PNG / JPG / WebP，每张最多 5 MB</span><button id="guideEditorCancel" type="button">取消</button><button id="guideEditorSave" type="submit" form="guideContentForm" class="editor-primary">保存这一步</button></div></footer>
+  </dialog>
+  <dialog id="guideBackupDialog" class="guide-backup-dialog" aria-labelledby="guideBackupTitle">
+    <header class="editor-dialog-head"><div><h2 id="guideBackupTitle">导出攻略备份</h2></div><button id="closeGuideBackup" type="button">关闭</button></header>
+    <div class="editor-dialog-body"><p>备份包含修改的流程、文字和上传的图片。换浏览器或电脑时，打开同一份攻略文件夹，再用“导入备份”恢复。</p><a id="guideBackupLink" class="editor-download">下载攻略备份</a><details class="backup-text-fallback"><summary>无法下载？复制备份文字</summary><label for="guideBackupText">复制全部内容，保存为 .json 文件</label><textarea id="guideBackupText" readonly spellcheck="false"></textarea></details><p class="edit-help">已完成步骤和当前位置单独保存在当前浏览器，内容备份不包含通关进度。</p></div>
+  </dialog>
+  <input id="guideImageFile" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+  <input id="guideBackupFile" type="file" accept=".json,application/json" hidden>
+  <div id="guideEditToast" class="guide-edit-toast" role="status" hidden></div>
+  <script src="data.js?v=20261005-node-order1"></script>
+  <script src="detail-guides.js?v=20261005-node-order1"></script>
   <script src="docx-screenshots.js"></script>
-  <script src="app.js"></script>
+  <script src="route-guides.js"></script>
+  <script src="key-shots.js"></script>
+  <script src="route-plans.js?v=20261005-node-order1"></script>
+  <script src="step-visuals.js?v=20261007-template1"></script>
+  <script src="map-notes.js?v=20261005-node-order1"></script>
+  <script src="image-markup-core.js?v=20261009-inline2"></script>
+  <script src="image-markup-editor.js?v=20261010-landmarks1"></script>
+  <script src="step-visual-renderer.js?v=20261010-landmarks1"></script>
+  <script src="guide-edit-core.js?v=20261010-node-summary1"></script>
+  <script src="guide-editor.js?v=20261010-node-summary1"></script>
+  <script src="app.js?v=20261010-node-summary1"></script>
 </body>
 </html>
