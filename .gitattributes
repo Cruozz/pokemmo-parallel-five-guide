@@ -1,0 +1,2 @@
+# Exported backups must retain their original bytes on every computer.
+/backups/*.json -text
